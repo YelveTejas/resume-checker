@@ -1,146 +1,91 @@
 'use client'
 
 interface Feedback {
-    score: number
-    summary:string 
-    strengths:string[]
-    gaps:string[]
-    suggestions:string[]
+  score: number
+  summary: string
+  strengths: string[]
+  gaps: string[]
+  suggestions: string[]
 }
-
 
 interface Scan {
-    id:string
-    score:number 
-    jobDescription:string 
-    createdAt:string 
-    feedback:Feedback
+  id: string
+  score: number
+  jobDescription: string
+  createdAt: string
+  feedback: Feedback
 }
-
 
 interface Props {
-    scan:Scan 
-    onDelete:(id:string) =>void
-    onClick:(scan:Scan)=>void
+  scan: Scan
+  onDelete: (id: string) => void
+  onClick: (scan: Scan) => void
 }
 
-export default function ScanCard({scan,onDelete,onClick}:Props){
-    const scoreColor =
-    scan.score >= 70 ? '#16a34a' :
-    scan.score >= 40 ? '#d97706' : '#dc2626'
+export default function ScanCard({ scan, onDelete, onClick }: Props) {
+  const scoreClass =
+    scan.score >= 70
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : scan.score >= 40
+        ? 'border-amber-200 bg-amber-50 text-amber-700'
+        : 'border-red-200 bg-red-50 text-red-700'
 
-    const handleDelete = async (e:React.MouseEvent)=>{
-         e.stopPropagation()
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation()
 
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this scan?'
-    )
+    const confirmed = window.confirm('Are you sure you want to delete this scan?')
     if (!confirmed) return
 
-      try{
-        const res = await fetch('/api/scan-history',{
-            method:"DELETE",
-            headers: { 'Content-Type': 'application/json' },
+    try {
+      const res = await fetch('/api/scan-history', {
+        method: "DELETE",
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ scanId: scan.id }),
-        })
+      })
 
-        if(res.ok){
-            onDelete(scan.id)
-        }
-      }catch(error){
-       console.error('Delete error:', error)
+      if (res.ok) {
+        onDelete(scan.id)
       }
+    } catch (error) {
+      console.error('Delete error:', error)
     }
+  }
 
-
-    const jobPreview = scan.jobDescription.slice(0,100)+"..."
-    const date = new Date(scan.createdAt).toLocaleDateString('en-IN', {
+  const jobPreview = scan.jobDescription.length > 120
+    ? `${scan.jobDescription.slice(0, 120)}...`
+    : scan.jobDescription
+  const date = new Date(scan.createdAt).toLocaleDateString('en-IN', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
   })
-return (
+
+  return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={() => onClick(scan)}
-      style={{
-        background: '#fff',
-        border: '1px solid #eee',
-        borderRadius: '12px',
-        padding: '20px',
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px',
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onClick(scan)
       }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = '#6366f1'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow =
-          '0 2px 8px rgba(99,102,241,0.1)'
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = '#eee'
-        ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
-      }}
+      className="flex w-full flex-col gap-4 rounded-lg border border-indigo-100 bg-white p-4 text-left shadow-sm transition hover:border-indigo-300 hover:shadow-md sm:flex-row sm:items-center"
     >
-      {/* Score circle */}
-      <div style={{
-        width: '56px',
-        height: '56px',
-        borderRadius: '50%',
-        background: `${scoreColor}15`,
-        border: `2px solid ${scoreColor}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        <span style={{
-          fontSize: '16px',
-          fontWeight: 700,
-          color: scoreColor,
-        }}>
-          {scan.score}
-        </span>
-      </div>
+      <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border text-base font-black ${scoreClass}`}>
+        {scan.score}
+      </span>
 
-      {/* Job preview and date */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{
-          margin: '0 0 4px',
-          fontSize: '13px',
-          color: '#444',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}>
-          {jobPreview}
-        </p>
-        <p style={{
-          margin: 0,
-          fontSize: '12px',
-          color: '#999',
-        }}>
-          {date}
-        </p>
-      </div>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold text-slate-950">{jobPreview}</span>
+        <span className="mt-1 block text-xs font-medium text-slate-500">{date}</span>
+      </span>
 
-      {/* Delete button */}
       <button
+        type="button"
         onClick={handleDelete}
-        style={{
-          background: 'none',
-          border: '1px solid #fca5a5',
-          borderRadius: '8px',
-          padding: '6px 12px',
-          fontSize: '12px',
-          color: '#dc2626',
-          cursor: 'pointer',
-          flexShrink: 0,
-        }}
+        className="inline-flex shrink-0 items-center justify-center rounded-lg border border-red-100 px-3 py-2 text-sm font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-50"
       >
         Delete
       </button>
     </div>
-)
+  )
 }
